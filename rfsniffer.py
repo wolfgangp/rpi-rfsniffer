@@ -51,8 +51,7 @@ elif preset_mode == GPIO.BOARD:
     defaulttxpin = 11
     defaultrxpin = 13
 
-defaulttimeout = 0.1
-
+defaulttimeout = 0.2
 rfsnifferdir = Path(__file__).parent.absolute()
 defaultpath = str(rfsnifferdir / "buttons")
 
@@ -161,14 +160,7 @@ def main():
     parser_dump.set_defaults(func=parsed_dump)
 
     args = parser.parse_args()
-
-    # buttons = shelve.open(args.buttonsdb)
-    # args.func(args, buttons)
     args.func(args)
-
-    # buttons.close()
-    # GPIO.cleanup()
-
 
 if __name__ == '__main__':
     main()
