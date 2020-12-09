@@ -23,6 +23,7 @@ def get_db(path=None):
     return shelve.open(path or Path.home() / "buttons.db", writeback=True)
 
 def condense_protocol3(stream):
+    """ this assumes microseconds (us) """
     # stream = np.fromstring(stream, dtype=int, sep=",")
     synch_signals = np.where((stream > 2900) & (stream < 7000))[0]
     last_full_signal_end_idx = synch_signals[-1]
@@ -39,12 +40,10 @@ def make_short(button_name):
     # print(timings.shape, toggle.shape)
     start, end = condense_protocol3(timings)
     float_timings = timings.astype(np.float) / 1e6
-    short_array = np.column_stack((float_timings[start: end],
-        toggle.astype(np.float)[start: end]))
-    print(f"Bits in signal (including synch): {short_array.shape[0] / 2}")
-    short_in_db_format = list(map(tuple, short_array.tolist()))
-    db[button_name + ".short"] = short_in_db_format
-    print(type(db[button_name][0][1]))
+    short = list(zip(float_timings[start: end].tolist(), toggle[start: end].tolist()))
+    # print(type(short), type(short[1]), type(short[1][0]), type(short[1][1]))
+    print(f"Bits in signal (including synch): {len(short) / 2}")
+    db[button_name + ".short"] = short
     db.close()
 
 
