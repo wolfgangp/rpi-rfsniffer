@@ -119,7 +119,7 @@ def main():
     parser_record = subparsers.add_parser('record',
                                           help='Record an RF signal')
     parser_record.add_argument('button')
-    parser_record.add_argument('timeout', type=float, default=0.3)
+    parser_record.add_argument('-timeout', type=float, default=0.3)
     parser_record.set_defaults(func=record)
 
     # Play subcommand
