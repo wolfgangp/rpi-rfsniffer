@@ -45,6 +45,7 @@ def play(args, buttonsdb):
     GPIO.setup(args.txpin, GPIO.OUT, initial=GPIO.LOW)
     for button in args.button:
         for i, (timing, level) in enumerate(buttonsdb[button]):
+            print(f"level type: {type(level)}")
             if i is not 0:
                 # Busy-sleep (gives a better time granularity than
                 # sleep() but at the cost of busy looping)
