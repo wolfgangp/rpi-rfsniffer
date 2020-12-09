@@ -27,12 +27,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import print_function
 import argparse
-import os
 from pathlib import Path
 import shelve
 import sys
 import time
 import warnings
+
 
 try:
     if 'RPi.GPIO' not in sys.modules:
@@ -43,10 +43,11 @@ except RuntimeError:
     # Catch here so that we can actually test on non-pi targets
     warnings.warn('This can only be executed on Raspberry Pi', RuntimeWarning)
 
-if GPIO.getmode() == GPIO.BCM:
+preset_mode = GPIO.getmode()
+if preset_mode == GPIO.BCM:
     defaulttxpin = 17
     defaultrxpin = 27
-elif GPIO.getmode() == GPIO.BOARD:
+elif preset_mode == GPIO.BOARD:
     defaulttxpin = 11
     defaultrxpin = 13
 
@@ -56,8 +57,9 @@ rfsnifferdir = Path(__file__).parent.absolute()
 defaultpath = str(rfsnifferdir / "buttons")
 
 
+
 def play(button_name, txpin=defaulttxpin, buttonsdb=defaultpath):
-    # buttons = shelve.open(buttonsdb)
+    GPIO.setmode(preset_mode)
     GPIO.setup(txpin, GPIO.OUT, initial=GPIO.LOW)
     with shelve.open(buttonsdb) as buttons:
         for i, (timing, level) in enumerate(buttons[button_name]):
@@ -68,13 +70,11 @@ def play(button_name, txpin=defaulttxpin, buttonsdb=defaultpath):
                 while now + timing > time.time():
                     pass
             GPIO.output(txpin, level)
-    GPIO.cleanup()
-
+    GPIO.cleanup()  # after this, we need to do GPIO.setmode()
 
 def parsed_play(args):
     for button in args.button:
         play(button, args.txpin, args.buttonsdb)    
-
 
 def read_timings(rxpin, timeout):
     capture = []
@@ -92,6 +92,7 @@ def read_timings(rxpin, timeout):
     return capture
 
 def record(button_name, rxpin=defaultrxpin, buttonsdb=defaultpath, timeout=defaulttimeout):
+    GPIO.setmode(preset_mode)
     GPIO.setup(rxpin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     print('Press', button_name)
     sample = read_timings(rxpin, timeout)
@@ -100,19 +101,10 @@ def record(button_name, rxpin=defaultrxpin, buttonsdb=defaultpath, timeout=defau
         buttons[button_name] = sample
     GPIO.cleanup()
 
-
 def parsed_record(args):
     record(args.button, args.rxpin, args.buttonsdb, args.timeout)
-    # GPIO.setup(args.rxpin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    # print('Press', args.button)
-    # sample = read_timings(args.rxpin, args.timeout)
-    # print('Recorded', len(sample), 'bit transitions')
-    # buttons[args.button] = sample
-    # GPIO.cleanup()
-
 
 def dump(buttonsdb=defaultpath, verbose=False):
-    # buttons = shelve.open(buttonsdb)
     with shelve.open(buttonsdb) as buttons:
         for button in sorted(buttons.keys()):
             print(button)
@@ -125,23 +117,8 @@ def dump(buttonsdb=defaultpath, verbose=False):
                     print(toggle, end=",")
                 print("\n")
 
-
 def parsed_dump(args):
     dump(args.buttonsdb, args.verbose)
-    # for button in sorted(buttons.keys()):
-    #     print(button)
-    #     if args.verbose:
-    #         #for timing, toggle in buttons[button]:
-    #             #print('\t{0:.6f}'.format(timing), toggle)
-    #         print("timings:")
-    #         for timing, _ in buttons[button]:
-    #             print(f"{(timing * 1e6):.0f}", end=",")
-    #         print("\nhigh/low:")
-    #         for _, toggle in buttons[button]:
-    #             print(toggle, end=",")
-    #         print("\n")
-
-
 
 def main():
     fc = argparse.ArgumentDefaultsHelpFormatter
