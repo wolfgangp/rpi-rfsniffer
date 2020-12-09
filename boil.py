@@ -24,27 +24,23 @@ def get_db(path=None):
 
 def condense_protocol3(stream):
     """ this assumes microseconds (us) """
-    # stream = np.fromstring(stream, dtype=int, sep=",")
     synch_signals = np.where((stream > 2900) & (stream < 7000))[0]
+    # synch_signals = np.where(stream > 6900)[0]
     last_full_signal_end_idx = synch_signals[-1]
     last_full_signal_start_idx = synch_signals[-2]
-    # stream_seq = stream[last_full_signal_start_idx: last_full_signal_end_idx]
     return last_full_signal_start_idx, last_full_signal_end_idx
 
 def make_short(button_name):
     db = get_db(str(Path(__file__).parent / "buttons.db"))
     raw = np.asarray(db[button_name])
-    # print(raw[:2])
     timings = (raw[:,0] * 1e6).astype(np.int)  # s to us
     toggle = raw[:,1].astype(np.int)
-    # print(timings.shape, toggle.shape)
     start, end = condense_protocol3(timings)
     float_timings = timings.astype(np.float) / 1e6
     short = list(zip(float_timings[start: end].tolist(), toggle[start: end].tolist()))
-    # print(type(short), type(short[1]), type(short[1][0]), type(short[1][1]))
     print(f"Bits in signal (including synch): {len(short) / 2}")
-    db[button_name + ".short"] = short
+    db[button_name + ".short"] = short * 5  # repeat 5 times
     db.close()
 
 
-make_short("OBIRemote2.C.off")
+make_short("OBIRemote2.C.on2")

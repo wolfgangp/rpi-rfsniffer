@@ -60,7 +60,7 @@ def read_timings(rx_pin):
     run = time.time()
     start = 0
     #while True:
-    while start < run + 2:
+    while start < run + 0.5:
         start = time.time()
         if GPIO.wait_for_edge(rx_pin, GPIO.BOTH, timeout=1000):
             capture.append((time.time() - start, GPIO.input(rx_pin)))
