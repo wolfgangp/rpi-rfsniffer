@@ -57,15 +57,19 @@ def play(args, buttonsdb):
 
 def read_timings(rx_pin):
     capture = []
-    while True:
+    run = time.time()
+    start = 0
+    #while True:
+    while start < run + 2:
         start = time.time()
         if GPIO.wait_for_edge(rx_pin, GPIO.BOTH, timeout=1000):
             capture.append((time.time() - start, GPIO.input(rx_pin)))
-
+            #print(capture)
         elif len(capture) < 5:  # Any pattern is likely larger than 5 bits
             capture = []
         else:
             return capture
+    return capture
 
 
 def record(args, buttons):
@@ -81,9 +85,15 @@ def dump(args, buttons):
     for button in sorted(buttons.keys()):
         print(button)
         if args.verbose:
-            for timing, toggle in buttons[button]:
-                print('\t{0:.6f}'.format(timing), toggle)
-
+            #for timing, toggle in buttons[button]:
+                #print('\t{0:.6f}'.format(timing), toggle)
+            print("timings:")
+            for timing, _ in buttons[button]:
+                print(f"{(timing * 1e6):.0f}", end=",")
+            print("\nhigh/low:")
+            for _, toggle in buttons[button]:
+                print(toggle, end=",")
+            print("\n")
 
 def main():
     fc = argparse.ArgumentDefaultsHelpFormatter
