@@ -53,7 +53,7 @@ elif GPIO.getmode() == GPIO.BOARD:
 defaulttimeout = 0.1
 
 rfsnifferdir = Path(__file__).parent.absolute()
-defaultpath = str(rfsnifferdir / "buttons.db")
+defaultpath = str(rfsnifferdir / "buttons")
 
 
 def play(button_name, txpin=defaulttxpin, buttonsdb=defaultpath):
