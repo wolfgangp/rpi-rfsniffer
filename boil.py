@@ -39,7 +39,7 @@ def make_short(button_name):
     float_timings = timings.astype(np.float) / 1e6
     short = list(zip(float_timings[start: end].tolist(), toggle[start: end].tolist()))
     print(f"Bits in signal (including synch): {len(short) / 2}")
-    db[button_name + ".short"] = short * 5  # repeat 5 times
+    db[button_name + ".short"] = short * 3  # repeat 3 times
     db.close()
 
 

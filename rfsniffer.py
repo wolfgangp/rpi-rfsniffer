@@ -55,16 +55,15 @@ def play(args, buttonsdb):
             GPIO.output(args.txpin, level)
 
 
-def read_timings(rx_pin):
+def read_timings(rx_pin, timeout):
     capture = []
-    run = time.time()
-    start = 0
+    start = time.time()
+    now = 0
     #while True:
-    while start < run + 0.5:
-        start = time.time()
+    while now < start + timeout:
+        now = time.time()
         if GPIO.wait_for_edge(rx_pin, GPIO.BOTH, timeout=1000):
-            capture.append((time.time() - start, GPIO.input(rx_pin)))
-            #print(capture)
+            capture.append((time.time() - now, GPIO.input(rx_pin)))
         elif len(capture) < 5:  # Any pattern is likely larger than 5 bits
             capture = []
         else:
@@ -76,7 +75,7 @@ def record(args, buttons):
     GPIO.setup(args.rxpin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
     print('Press', args.button)
-    sample = read_timings(args.rxpin)
+    sample = read_timings(args.rxpin, args.timeout)
     print('Recorded', len(sample), 'bit transitions')
     buttons[args.button] = sample
 
@@ -120,6 +119,7 @@ def main():
     parser_record = subparsers.add_parser('record',
                                           help='Record an RF signal')
     parser_record.add_argument('button')
+    parser_record.add_argument('timeout', type=float, default=0.3)
     parser_record.set_defaults(func=record)
 
     # Play subcommand
