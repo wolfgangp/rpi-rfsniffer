@@ -39,30 +39,31 @@ try:
         import RPi.GPIO as GPIO
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BOARD)
+    # preset_mode = GPIO.getmode()
+    # if preset_mode == GPIO.BCM:
+    #     defaulttxpin = 17
+    #     defaultrxpin = 27
+    # elif preset_mode == GPIO.BOARD:
+    #     defaulttxpin = 11
+    #     defaultrxpin = 13
 except RuntimeError:
     # Catch here so that we can actually test on non-pi targets
     warnings.warn('This can only be executed on Raspberry Pi', RuntimeWarning)
 
-preset_mode = GPIO.getmode()
-if preset_mode == GPIO.BCM:
-    defaulttxpin = 17
-    defaultrxpin = 27
-elif preset_mode == GPIO.BOARD:
-    defaulttxpin = 11
-    defaultrxpin = 13
-
+defaulttxpin = 11
+defaultrxpin = 13
 defaulttimeout = 0.2
 rfsnifferdir = Path(__file__).parent.absolute()
 defaultpath = str(rfsnifferdir / "buttons")
 
 
-
 def play(button_name, txpin=defaulttxpin, buttonsdb=defaultpath):
-    GPIO.setmode(preset_mode)
+    # GPIO.setmode(preset_mode)
+    GPIO.setmode(GPIO.BOARD)
     GPIO.setup(txpin, GPIO.OUT, initial=GPIO.LOW)
     with shelve.open(buttonsdb) as buttons:
         for i, (timing, level) in enumerate(buttons[button_name]):
-            if i is not 0:
+            if i != 0:
                 # Busy-sleep (gives a better time granularity than
                 # sleep() but at the cost of busy looping)
                 now = time.time()
@@ -91,7 +92,8 @@ def read_timings(rxpin, timeout):
     return capture
 
 def record(button_name, rxpin=defaultrxpin, buttonsdb=defaultpath, timeout=defaulttimeout):
-    GPIO.setmode(preset_mode)
+    # GPIO.setmode(preset_mode)
+    GPIO.setmode(GPIO.BOARD)
     GPIO.setup(rxpin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     print('Press', button_name)
     sample = read_timings(rxpin, timeout)
