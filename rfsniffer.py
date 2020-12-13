@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''
 Copyright (c) 2017, Jesper Derehag
 All rights reserved.
@@ -52,9 +52,9 @@ except RuntimeError:
 
 defaulttxpin = 11
 defaultrxpin = 13
-defaulttimeout = 0.2
+defaulttimeout = 0.4
 rfsnifferdir = Path(__file__).parent.absolute()
-defaultpath = str(rfsnifferdir / "buttons")
+defaultpath = str(rfsnifferdir / "buttons.db")
 
 
 def play(button_name, txpin=defaulttxpin, buttonsdb=defaultpath):
@@ -74,7 +74,7 @@ def play(button_name, txpin=defaulttxpin, buttonsdb=defaultpath):
 
 def parsed_play(args):
     for button in args.button:
-        play(button, args.txpin, args.buttonsdb)    
+        play(button, args.txpin, args.buttonsdb)
 
 def read_timings(rxpin, timeout):
     capture = []
@@ -105,6 +105,7 @@ def record(button_name, rxpin=defaultrxpin, buttonsdb=defaultpath, timeout=defau
 def parsed_record(args):
     record(args.button, args.rxpin, args.buttonsdb, args.timeout)
 
+
 def dump(buttonsdb=defaultpath, verbose=False):
     with shelve.open(buttonsdb) as buttons:
         for button in sorted(buttons.keys()):
@@ -120,6 +121,30 @@ def dump(buttonsdb=defaultpath, verbose=False):
 
 def parsed_dump(args):
     dump(args.buttonsdb, args.verbose)
+
+def copy(old_button_name, new_button_name, buttonsdb=defaultpath, remove=False):
+    with shelve.open(buttonsdb) as buttons:
+        if old_button_name not in buttons:
+            raise NameError(f"{old_button_name} not in database! Aborting.")
+        if new_button_name in buttons:
+            raise NameError(f"{new_button_name} already in database! Aborting.")
+        buttons[new_button_name] = buttons[old_button_name]
+        if remove:
+            del buttons[old_button_name]
+
+def parsed_copy(args):
+    copy(args.old_button, args.new_button, buttonsdb=args.buttonsdb, remove=False)
+
+def parsed_rename(args):
+    copy(args.old_button, args.new_button, buttonsdb=args.buttonsdb, remove=True)
+
+def delete(button_name, buttonsdb=defaultpath):
+    with shelve.open(buttonsdb) as buttons:
+        del buttons[button_name]
+
+def parsed_delete(args):
+    for button in args.button:
+        delete(button, args.buttonsdb)
 
 def main():
     fc = argparse.ArgumentDefaultsHelpFormatter
@@ -147,12 +172,12 @@ def main():
                                           help='Record an RF signal')
     parser_record.add_argument('button')
     parser_record.add_argument('-timeout', type=float, default=defaulttimeout,
-                               help='Stop recording after x seconds')
+                               help='Stop recording after timeout seconds')
     parser_record.set_defaults(func=parsed_record)
 
     # Play subcommand
-    parser_play = subparsers.add_parser('play', help=('Send a previously '
-                                                      'recorded RF signal'))
+    parser_play = subparsers.add_parser('play', help=('Send previously '
+                                                      'recorded RF signals'))
     parser_play.add_argument('button', nargs='*')
     parser_play.set_defaults(func=parsed_play)
 
@@ -160,6 +185,23 @@ def main():
     parser_dump = subparsers.add_parser('dump', help=('Dumps the already '
                                                       'recorded RF signals'))
     parser_dump.set_defaults(func=parsed_dump)
+
+    # Copy subcommand
+    parser_copy = subparsers.add_parser('copy', help=('Copy button in database'))
+    parser_copy.add_argument('old_button')
+    parser_copy.add_argument('new_button')
+    parser_copy.set_defaults(func=parsed_copy)
+
+    # Rename subcommand
+    parser_rename = subparsers.add_parser('rename', help=('Rename button in database'))
+    parser_rename.add_argument('old_button')
+    parser_rename.add_argument('new_button')
+    parser_rename.set_defaults(func=parsed_rename)
+
+    # Rename subcommand
+    parser_del = subparsers.add_parser('delete', help=('Delete buttons from database'))
+    parser_del.add_argument('button', nargs='*')   
+    parser_del.set_defaults(func=parsed_delete)
 
     args = parser.parse_args()
     args.func(args)
